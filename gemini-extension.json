@@ -10,7 +10,7 @@
     "notion": {
       "command": "node",
       "args": [
-        "dist/bundle.js"
+        "${extensionPath}/dist/bundle.js"
       ],
       "cwd": "${extensionPath}",
       "env": {
