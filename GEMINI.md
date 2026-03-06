@@ -277,44 +277,25 @@ User Input
 
 ---
 
-## 🔄 WORKFLOWS
+## 🔄 MEGA-SKILLS
 
-### Workflow 1: Export Conversation (One-Click)
-```
-User: "export this" / "save to Notion"
-    ↓
-Step 1: Auto-generate title from first meaningful topic
-Step 2: Detect languages from code blocks (TypeScript, Python, etc.)
-Step 3: Infer tags from discussion context
-Step 4: Set Export Date = today
-Step 5: Execute export_conversation immediately
-    ↓
-Result: "✓ Exported: [Title] - https://notion.so/page-id"
-```
+This extension utilizes two dedicated "Mega-Skills" that understand Notion at a granular level. When given a complex request, refer to the respective specialist:
 
-### Workflow 2: Delete Page (Search → Delete)
-```
-User: "delete the [page name]"
-    ↓
-Step 1: notion_search for the page
-Step 2: Get EXACT ID from search results
-Step 3: delete_page with that exact ID
-    ↓
-Result: "✓ Deleted: [Page Name]"
-```
+### 1. Notion Database Specialist
+- **Focus**: Managing schemas, creating tables, managing rows and templates.
+- **Key Tools**: `list_databases`, `query_database`, `create_database_from_template`, `update_database_schema`, `update_database_entry`.
+- **Workflow Example (Row Update)**:
+  `query_database` to find exact row → `update_page` (on row ID) to apply changes.
+- **Workflow Example (Schema Augmentation)**:
+  `list_databases` to find exact DB → `update_database_schema` to add "Assignee" column.
 
-### Workflow 3: Query Recent Items
-```
-User: "show recent conversations" / "what was edited today"
-    ↓
-Step 1: query_database with sorts:
-        [{"timestamp": "last_edited_time", "direction": "descending"}]
-Step 2: Display results with titles and dates
-    ↓
-Result: List of recent items
-```
-
----
+### 2. Notion Document Specialist
+- **Focus**: Managing pages, blocks, structured writing, and exporting conversations.
+- **Key Tools**: `notion_search`, `create_page`, `append_blocks`, `delete_page`, `export_conversation`.
+- **Workflow Example (Page Deletion)**:
+  `notion_search` to find exact page UUID → `delete_page` immediately.
+- **Workflow Example (Conversation Export)**:
+  Synthesize title/tags autonomously → `export_conversation` immediately.
 
 ## 🔍 SEARCH
 

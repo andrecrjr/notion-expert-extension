@@ -9,7 +9,7 @@ const SERVICE_NAME = 'gemini-notion-extension';
  */
 export function getCredential(name: string): string | null {
   const targetName = `GeminiNotionExtension_${name}`;
-  
+
   try {
     switch (platform()) {
       case 'win32':
@@ -37,7 +37,7 @@ function getWindowsCredential(target: string): string | null {
   if (process.env.NOTION_API_KEY) {
     return process.env.NOTION_API_KEY;
   }
-  
+
   // Try to verify credential exists (but can't retrieve password with cmdkey alone)
   try {
     const result = execSync(`cmdkey /list:"${target}"`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] });
@@ -48,7 +48,7 @@ function getWindowsCredential(target: string): string | null {
   } catch {
     // Credential doesn't exist
   }
-  
+
   return null;
 }
 
@@ -57,11 +57,14 @@ function getWindowsCredential(target: string): string | null {
  */
 function getMacCredential(name: string): string | null {
   try {
+    if (process.env.NOTION_API_KEY) {
+      return process.env.NOTION_API_KEY;
+    }
     const password = execSync(
       `security find-generic-password -s "${SERVICE_NAME}" -a "${name}" -w`,
-      { encoding: 'utf-8' }
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }
     ).trim();
-    
+
     return password || null;
   } catch (error) {
     return null;
@@ -72,12 +75,17 @@ function getMacCredential(name: string): string | null {
  * Linux secret-tool (libsecret)
  */
 function getLinuxCredential(name: string): string | null {
+  console.log(`Retrieving Linux credential for ${name}`);
   try {
+    if (process.env.NOTION_API_KEY) {
+      console.log(`Using environment variable NOTION_API_KEY`);
+      return process.env.NOTION_API_KEY;
+    }
     const password = execSync(
       `secret-tool lookup service "${SERVICE_NAME}" account "${name}"`,
-      { encoding: 'utf-8' }
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }
     ).trim();
-    
+
     return password || null;
   } catch (error) {
     return null;
@@ -89,17 +97,17 @@ function getLinuxCredential(name: string): string | null {
  */
 export function getNotionApiKey(): string {
   // Try secure credential storage first
-  const apiKey = getCredential('API_KEY');
-  
+  const apiKey = getCredential('NOTION_API_KEY');
+
   if (apiKey) {
     return apiKey;
   }
-  
+
   // Fallback to environment variable
   if (process.env.NOTION_API_KEY && process.env.NOTION_API_KEY !== 'secret_your_integration_token_here') {
     return process.env.NOTION_API_KEY;
   }
-  
+
   throw new Error(
     'Notion API key not found!\n\n' +
     'Please run the setup script:\n' +

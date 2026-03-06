@@ -1,11 +1,11 @@
-# 📝 Gemini CLI Notion Extension v3.0.4 Enhanced Edition
+# 📝 Notion Expert v3.0.4 Enhanced Edition
 
 > Complete Notion workspace automation with [Gemini CLI](https://github.com/google-gemini/gemini-cli) via Model Context Protocol (MCP).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-Extension-blue.svg)](https://github.com/google-gemini/gemini-cli)
-[![Version](https://img.shields.io/badge/Version-3.0.4-brightgreen.svg)](https://github.com/PatelPratikkumar/gemini-notion-extension/releases)
+[![Version](https://img.shields.io/badge/Version-3.0.4-brightgreen.svg)](https://github.com/PatelPratikkumar/gemini-notion-expert/releases)
 
 Transform your Notion workspace into a powerful automation hub with 46 comprehensive tools, file processing, database templates, and intelligent monitoring.
 
@@ -84,7 +84,7 @@ The Notion extension requires **both extension installation AND MCP server regis
 
 ```bash
 # 1. Install extension with auto-update
-gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-extension --auto-update
+gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-expert --auto-update
 
 # 2. Get your Notion API token (see section below)
 # Set as environment variable:
@@ -92,7 +92,7 @@ setx NOTION_API_KEY "your_notion_token_here"  # Windows
 export NOTION_API_KEY="your_notion_token_here"  # macOS/Linux
 
 # 3. Register MCP server for tool access
-gemini mcp add notion node "~/.gemini/extensions/notion-extension/dist/bundle.js" -e NOTION_API_KEY="${NOTION_API_KEY}" --timeout 30000 -s user
+gemini mcp add notion node "~/.gemini/extensions/notion-expert/dist/bundle.js" -e NOTION_API_KEY="${NOTION_API_KEY}" --timeout 30000 -s user
 
 # 4. Verify installation
 gemini mcp list
@@ -149,7 +149,7 @@ In Notion, grant access to pages/databases you want to use:
 
 ```bash
 # 1. Install extension from GitHub
-gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-extension --auto-update
+gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-expert --auto-update
 
 # 2. Set environment variable (choose your OS)
 # Windows (PowerShell - restart terminal after):
@@ -160,7 +160,7 @@ echo 'export NOTION_API_KEY="ntn_your_token_here"' >> ~/.bashrc
 source ~/.bashrc
 
 # 3. Register MCP server (critical step!)
-gemini mcp add notion node "~/.gemini/extensions/notion-extension/dist/bundle.js" \
+gemini mcp add notion node "~/.gemini/extensions/notion-expert/dist/bundle.js" \
   -e NOTION_API_KEY="${NOTION_API_KEY}" \
   --timeout 30000 \
   -s user
@@ -173,7 +173,7 @@ echo "What Notion tools do you have?" | gemini chat
 **Future updates:**
 ```bash
 # Update extension
-gemini extensions update notion-extension
+gemini extensions update notion-expert
 
 # MCP server automatically uses updated code
 # No additional steps needed
@@ -185,8 +185,8 @@ gemini extensions update notion-extension
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/PatelPratikkumar/gemini-notion-extension.git
-cd gemini-notion-extension
+git clone https://github.com/PatelPratikkumar/gemini-notion-expert.git
+cd gemini-notion-expert
 
 # 2. Install dependencies
 npm install
@@ -230,10 +230,10 @@ npm run build
 
 ```bash
 # 1. Install extension
-gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-extension --auto-update
+gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-expert --auto-update
 
 # 2. Navigate to extension directory
-cd ~/.gemini/extensions/notion-extension
+cd ~/.gemini/extensions/notion-expert
 
 # 3. Run setup script (guides you through token setup and database configuration)
 # Windows:
@@ -243,7 +243,7 @@ cd ~/.gemini/extensions/notion-extension
 chmod +x setup-unix.sh && ./setup-unix.sh
 
 # 4. Register MCP server (still required after setup)
-gemini mcp add notion node "~/.gemini/extensions/notion-extension/dist/bundle.js" \
+gemini mcp add notion node "~/.gemini/extensions/notion-expert/dist/bundle.js" \
   -e NOTION_API_KEY="${NOTION_API_KEY}" \
   --timeout 30000 \
   -s user
@@ -260,7 +260,7 @@ gemini mcp add notion node "~/.gemini/extensions/notion-extension/dist/bundle.js
 gemini mcp remove notion
 
 # 2. Uninstall extension
-gemini extensions uninstall notion-extension
+gemini extensions uninstall notion-expert
 
 # 3. Clean environment variables (optional)
 # Windows:
@@ -272,7 +272,7 @@ source ~/.bashrc
 
 # 4. Remove cached data (optional)
 rm ~/.notion-cache.json  # If exists
-rm ~/.gemini/extensions/notion-extension/ -rf  # If exists
+rm ~/.gemini/extensions/notion-expert/ -rf  # If exists
 ```
 
 ### **Partial Removal (Keep Extension, Remove MCP Server)**
@@ -299,7 +299,7 @@ gemini mcp list
 # Should show: ✓ notion: ... - Connected
 
 # 2. If missing or disconnected, register MCP server:
-gemini mcp add notion node "~/.gemini/extensions/notion-extension/dist/bundle.js" \
+gemini mcp add notion node "~/.gemini/extensions/notion-expert/dist/bundle.js" \
   -e NOTION_API_KEY="${NOTION_API_KEY}" \
   --timeout 30000 \
   -s user
@@ -321,7 +321,7 @@ gemini mcp logs notion
 
 # 2. Increase timeout and re-register
 gemini mcp remove notion
-gemini mcp add notion node "~/.gemini/extensions/notion-extension/dist/bundle.js" \
+gemini mcp add notion node "~/.gemini/extensions/notion-expert/dist/bundle.js" \
   -e NOTION_API_KEY="${NOTION_API_KEY}" \
   --timeout 60000 \
   -s user
@@ -359,12 +359,12 @@ export NOTION_API_KEY="your_new_token"  # macOS/Linux
 gemini extensions list
 
 # 2. Force clean reinstall
-gemini extensions uninstall notion-extension
+gemini extensions uninstall notion-expert
 gemini mcp remove notion
-gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-extension --auto-update
+gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-expert --auto-update
 
 # 3. Re-register MCP server with updated path
-gemini mcp add notion node "~/.gemini/extensions/notion-extension/dist/bundle.js" \
+gemini mcp add notion node "~/.gemini/extensions/notion-expert/dist/bundle.js" \
   -e NOTION_API_KEY="${NOTION_API_KEY}" \
   --timeout 30000 \
   -s user
@@ -413,7 +413,7 @@ source ~/.bashrc  # Or ~/.zshrc
 ```bash
 # 1. Check extension status
 gemini extensions list
-# Should show: ✓ notion-extension v3.0.3
+# Should show: ✓ notion-expert v3.0.3
 
 # 2. Check MCP server status
 gemini mcp list
@@ -469,7 +469,7 @@ The update method depends on how you installed the extension:
 If installed with `gemini extensions install https://...`:
 ```bash
 # Update specific extension to latest version
-gemini extensions update notion-extension
+gemini extensions update notion-expert
 
 # Update all extensions at once
 gemini extensions update --all
@@ -478,7 +478,7 @@ gemini extensions update --all
 #### Locally Linked Extensions (Manual Updates Required 🔧)
 If installed with `gemini extensions link .` (development):
 ```bash
-cd /path/to/your/gemini-notion-extension
+cd /path/to/your/gemini-notion-expert
 git pull origin main
 npm install
 npm run build
@@ -488,8 +488,8 @@ npm run build
 #### Force Reinstall from GitHub
 ```bash
 # For any issues or switching from local to git-managed
-gemini extensions uninstall notion-extension
-gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-extension --auto-update
+gemini extensions uninstall notion-expert
+gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-expert --auto-update
 ```
 
 ### Extension Management Commands
@@ -499,16 +499,16 @@ gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-exte
 gemini extensions list
 
 # Check extension status and info
-gemini extensions list | grep notion-extension
+gemini extensions list | grep notion-expert
 
 # Disable temporarily (keeps configuration)
-gemini extensions disable notion-extension
+gemini extensions disable notion-expert
 
 # Re-enable extension
-gemini extensions enable notion-extension
+gemini extensions enable notion-expert
 
 # Completely remove extension
-gemini extensions uninstall notion-extension
+gemini extensions uninstall notion-expert
 
 # Validate extension integrity
 gemini extensions validate .
@@ -519,17 +519,17 @@ gemini extensions validate .
 For automatic updates when installing:
 ```bash
 # Install with auto-update enabled
-gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-extension --auto-update
+gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-expert --auto-update
 ```
 
 ### Version Checking
 
 ```bash
 # Check current version
-gemini extensions list | grep notion-extension
+gemini extensions list | grep notion-expert
 
 # View extension details
-cd ~/.gemini/extensions/notion-extension
+cd ~/.gemini/extensions/notion-expert
 cat package.json | grep version
 ```
 
@@ -682,7 +682,7 @@ cat package.json | grep version
 
 ```json
 {
-  "name": "notion-extension",
+  "name": "notion-expert",
   "description": "Full Notion workspace integration",
   "mcpServers": {
     "notion": {
@@ -747,19 +747,19 @@ $env:NOTION_API_KEY
 **macOS:**
 ```bash
 # Check keychain
-security find-generic-password -s "gemini-notion-extension" -a "NOTION_API_KEY" -w
+security find-generic-password -s "gemini-notion-expert" -a "NOTION_API_KEY" -w
 
 # Add manually
-security add-generic-password -s "gemini-notion-extension" -a "NOTION_API_KEY" -w "secret_xxx"
+security add-generic-password -s "gemini-notion-expert" -a "NOTION_API_KEY" -w "secret_xxx"
 ```
 
 **Linux:**
 ```bash
 # Check secret
-secret-tool lookup service gemini-notion-extension account NOTION_API_KEY
+secret-tool lookup service gemini-notion-expert account NOTION_API_KEY
 
 # Store manually
-echo "secret_xxx" | secret-tool store --label="Notion API Key" service gemini-notion-extension account NOTION_API_KEY
+echo "secret_xxx" | secret-tool store --label="Notion API Key" service gemini-notion-expert account NOTION_API_KEY
 ```
 
 ---
@@ -767,7 +767,7 @@ echo "secret_xxx" | secret-tool store --label="Notion API Key" service gemini-no
 ## 📁 Project Structure
 
 ```
-gemini-notion-extension/
+gemini-notion-expert/
 ├── src/
 │   ├── server.ts          # MCP server with all tool handlers
 │   ├── tools.ts            # Tool definitions (JSON Schema)
@@ -900,27 +900,27 @@ MIT License - see [LICENSE](LICENSE) file.
 
 Make sure you've run the setup script or set the credential manually:
 - Windows: `echo $env:NOTION_API_KEY`
-- macOS: `security find-generic-password -s "gemini-notion-extension" -a "NOTION_API_KEY" -w`
-- Linux: `secret-tool lookup service gemini-notion-extension account NOTION_API_KEY`
+- macOS: `security find-generic-password -s "gemini-notion-expert" -a "NOTION_API_KEY" -w`
+- Linux: `secret-tool lookup service gemini-notion-expert account NOTION_API_KEY`
 
 ### Extension Updates
 
 #### "Extension update failed"
 ```bash
 # Force reinstall from GitHub
-gemini extensions uninstall notion-extension
-gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-extension --auto-update
+gemini extensions uninstall notion-expert
+gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-expert --auto-update
 ```
 
 #### "Extension is already up to date" (but you know there's a new version)
 ```bash
 # Check GitHub for latest version, then force install
-gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-extension --auto-update
+gemini extensions install https://github.com/PatelPratikkumar/gemini-notion-expert --auto-update
 ```
 
 #### Local development version not updating
 ```bash
-cd /path/to/gemini-notion-extension
+cd /path/to/gemini-notion-expert
 git pull origin main
 npm install
 npm run build
@@ -929,7 +929,7 @@ npm run build
 ### "Extension not loading"
 
 1. Rebuild: `npm run build`
-2. Relink: `gemini extensions uninstall notion-extension && gemini extensions link .`
+2. Relink: `gemini extensions uninstall notion-expert && gemini extensions link .`
 3. Check status: `gemini extensions list`
 
 ### "API errors" or "object not found"

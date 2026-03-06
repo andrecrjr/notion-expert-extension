@@ -1,15 +1,17 @@
 {
-  "name": "notion-extension",
-  "displayName": "Notion Extension v3.0.4 Enhanced Edition",
-  "description": "Enhanced Notion workspace automation with 46+ tools, file processing, database templates, and monitoring",
-  "version": "3.0.4",
-  "author": "PatelPratikkumar",
+  "name": "notion-expert",
+  "displayName": "Notion Expert v1.0.0",
+  "description": "Notion Expert is a powerful Notion workspace automation tool with 46+ tools, file processing, database templates, and monitoring",
+  "version": "1.0.0",
+  "author": "André Cardoso",
   "license": "MIT",
-  "repository": "https://github.com/PatelPratikkumar/gemini-notion-extension",
+  "repository": "https://github.com/andrecrjr/gemini-notion-extension",
   "mcpServers": {
     "notion": {
       "command": "node",
-      "args": ["dist/bundle.js"],
+      "args": [
+        "dist/bundle.js"
+      ],
       "cwd": "${extensionPath}",
       "env": {
         "NOTION_API_KEY": "${NOTION_API_KEY}"
@@ -17,6 +19,14 @@
       "timeout": 30
     }
   },
+  "settings": [
+    {
+      "name": "Notion API Key",
+      "description": "Your internal integration secret from https://www.notion.so/my-integrations",
+      "envVar": "NOTION_API_KEY",
+      "sensitive": true
+    }
+  ],
   "contextPath": "GEMINI.md",
   "commands": [
     {
@@ -38,6 +48,26 @@
       "name": "recent-changes",
       "description": "Show recently modified pages",
       "usage": "/recent-changes [--limit NUMBER]"
+    },
+    {
+      "name": "add-database-entry",
+      "description": "Add a new row to a Notion database",
+      "usage": "/add-database-entry [content]"
+    },
+    {
+      "name": "delete-notion-page",
+      "description": "Delete a specific Notion page",
+      "usage": "/delete-notion-page [page name]"
+    },
+    {
+      "name": "update-database-entry",
+      "description": "Update an existing item inside a database",
+      "usage": "/update-database-entry [update details]"
+    },
+    {
+      "name": "update-database-schema",
+      "description": "Add, remove, or modify database columns",
+      "usage": "/update-database-schema [schema changes]"
     }
   ]
 }

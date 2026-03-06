@@ -133,7 +133,7 @@ Core tools (38) + Enhanced tools (8) = **46 total tools**
 - Proper MCP server configuration (object format, not array)
 
 ### Fixed
-- Extension naming changed to "notion-extension"
+- Extension naming changed to "notion-expert"
 - MCP server key set to "notion"
 - Timestamp sorting (use `timestamp` not `property`)
 

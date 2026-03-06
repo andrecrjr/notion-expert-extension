@@ -37,14 +37,14 @@ store_credential() {
     
     if [ "$PLATFORM" = "macos" ]; then
         # macOS Keychain
-        security delete-generic-password -s "gemini-notion-extension" -a "$name" 2>/dev/null || true
-        security add-generic-password -s "gemini-notion-extension" -a "$name" -w "$value"
+        security delete-generic-password -s "gemini-notion-expert" -a "$name" 2>/dev/null || true
+        security add-generic-password -s "gemini-notion-expert" -a "$name" -w "$value"
         echo -e "${GREEN}      ✓ Stored in macOS Keychain${NC}"
     else
         # Linux - libsecret
         if command -v secret-tool &> /dev/null; then
             echo "$value" | secret-tool store --label="Gemini Notion Extension - $name" \
-                service gemini-notion-extension account "$name"
+                service gemini-notion-expert account "$name"
             echo -e "${GREEN}      ✓ Stored in GNOME Keyring${NC}"
         else
             echo -e "${YELLOW}      ⚠ secret-tool not found, using environment variable${NC}"

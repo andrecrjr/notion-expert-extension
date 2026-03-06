@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Notion MCP Server v3.0.0 - Enhanced Edition with 46 tools (38 original + 8 enhanced)
+import 'dotenv/config';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, } from '@modelcontextprotocol/sdk/types.js';

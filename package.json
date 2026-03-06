@@ -1,7 +1,7 @@
 {
-  "name": "gemini-notion-extension",
+  "name": "notion-expert",
   "version": "3.0.4",
-  "description": "Enhanced Notion integration for Gemini CLI - file uploads, automation, monitoring, plus 38+ comprehensive tools",
+  "description": "Notion Expert - Enhanced Notion integration for Gemini CLI - file uploads, automation, monitoring, plus 38+ comprehensive tools",
   "main": "dist/server.js",
   "type": "module",
   "engines": {
@@ -11,8 +11,8 @@
     "dev": "tsx watch src/server.ts",
     "dev:legacy": "tsx watch src/server-legacy.ts",
     "build": "tsc && npm run bundle",
-    "bundle": "esbuild dist/server.js --bundle --platform=node --target=node18 --format=esm --outfile=dist/bundle.js --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
-    "bundle:legacy": "esbuild dist/server-legacy.js --bundle --platform=node --target=node18 --format=esm --outfile=dist/bundle.js --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
+    "bundle": "esbuild dist/server.js --bundle --platform=node --target=node20 --format=esm --outfile=dist/bundle.js --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
+    "bundle:legacy": "esbuild dist/server-legacy.js --bundle --platform=node --target=node20 --format=esm --outfile=dist/bundle.js --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
     "start": "node dist/bundle.js",
     "test": "tsx tests/run-tests.ts",
     "test:enhanced": "node enhanced-api-test.js",
@@ -35,16 +35,16 @@
     "productivity",
     "document-scanner"
   ],
-  "author": "",
+  "author": "André Cardoso",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PatelPratikkumar/gemini-notion-extension.git"
+    "url": "git+https://github.com/andrecrjr/notion-expert.git"
   },
   "bugs": {
-    "url": "https://github.com/PatelPratikkumar/gemini-notion-extension/issues"
+    "url": "https://github.com/andrecrjr/notion-expert/issues"
   },
-  "homepage": "https://github.com/PatelPratikkumar/gemini-notion-extension#readme",
+  "homepage": "https://github.com/andrecrjr/notion-expert#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.5.0",
     "@notionhq/client": "^2.2.15",

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Notion MCP Server v3.0.0 - Enhanced Edition with 46 tools (38 original + 8 enhanced)
+import 'dotenv/config';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -26,7 +27,7 @@ const enhancedTools = [
     }
   },
   {
-    name: "get_usage_statistics", 
+    name: "get_usage_statistics",
     description: "Get detailed API usage statistics and rate limit status",
     inputSchema: {
       type: "object",
@@ -39,11 +40,11 @@ const enhancedTools = [
     name: "create_database_from_template",
     description: "Create databases with pre-configured templates (Document Scanner, Project Tracker, etc.)",
     inputSchema: {
-      type: "object", 
+      type: "object",
       properties: {
         parentPageId: { type: "string", description: "Parent page ID" },
-        templateName: { 
-          type: "string", 
+        templateName: {
+          type: "string",
           enum: ["document_scanner", "project_tracker", "meeting_notes", "task_management"],
           description: "Pre-built template"
         },
@@ -73,10 +74,10 @@ const enhancedTools = [
       properties: {
         filePath: { type: "string", description: "Local file path to process" },
         filename: { type: "string", description: "Custom filename (optional)" },
-        mode: { 
-          type: "string", 
-          enum: ["extract", "metadata", "secure"], 
-          description: "Processing mode: 'extract' gets text content from documents, 'metadata' shows file info only, 'secure' creates file reference with summary" 
+        mode: {
+          type: "string",
+          enum: ["extract", "metadata", "secure"],
+          description: "Processing mode: 'extract' gets text content from documents, 'metadata' shows file info only, 'secure' creates file reference with summary"
         },
         attachTo: {
           type: "object",
@@ -115,7 +116,7 @@ const enhancedTools = [
     }
   },
   {
-    name: "list_active_watchers", 
+    name: "list_active_watchers",
     description: "List all currently active file monitoring processes",
     inputSchema: { type: "object", properties: {} }
   }
@@ -367,7 +368,7 @@ function chunkContent(content: string, chunkSize: number = MAX_CHUNK_SIZE): stri
  */
 function createChunkedBlocks(content: string, blockType: 'paragraph' | 'code' = 'paragraph'): any[] {
   const blocks: any[] = [];
-  
+
   if (blockType === 'code') {
     // Code blocks can hold 100KB, but we chunk at 50KB for safety
     const chunks = chunkContent(content, MAX_CHUNK_SIZE);
@@ -380,7 +381,7 @@ function createChunkedBlocks(content: string, blockType: 'paragraph' | 'code' = 
           rich_text: [{ type: 'text', text: { content: chunks[i] } }],
         },
       });
-      
+
       // Add part indicator if multiple chunks
       if (chunks.length > 1 && i < chunks.length - 1) {
         blocks.push({
@@ -419,7 +420,7 @@ async function appendBlocksInBatches(
 ): Promise<void> {
   for (let i = 0; i < blocks.length; i += batchSize) {
     const batch = blocks.slice(i, i + batchSize);
-    
+
     await withRetry(
       () => notion.blocks.children.append({
         block_id: pageId,
@@ -449,11 +450,11 @@ interface CacheEntry<T> {
 class TTLCache<T> {
   private cache: Map<string, CacheEntry<T>> = new Map();
   private readonly defaultTTL: number;
-  
+
   constructor(defaultTTLSeconds: number = 300) { // 5 min default
     this.defaultTTL = defaultTTLSeconds * 1000;
   }
-  
+
   set(key: string, data: T, ttlSeconds?: number): void {
     this.cache.set(key, {
       data,
@@ -461,27 +462,27 @@ class TTLCache<T> {
       ttl: (ttlSeconds ?? this.defaultTTL / 1000) * 1000,
     });
   }
-  
+
   get(key: string): T | undefined {
     const entry = this.cache.get(key);
     if (!entry) return undefined;
-    
+
     if (Date.now() - entry.timestamp > entry.ttl) {
       this.cache.delete(key);
       return undefined;
     }
-    
+
     return entry.data;
   }
-  
+
   has(key: string): boolean {
     return this.get(key) !== undefined;
   }
-  
+
   invalidate(key: string): void {
     this.cache.delete(key);
   }
-  
+
   invalidatePattern(pattern: string): void {
     const regex = new RegExp(pattern);
     for (const key of this.cache.keys()) {
@@ -490,11 +491,11 @@ class TTLCache<T> {
       }
     }
   }
-  
+
   clear(): void {
     this.cache.clear();
   }
-  
+
   stats(): { size: number; keys: string[] } {
     return { size: this.cache.size, keys: Array.from(this.cache.keys()) };
   }
@@ -525,25 +526,25 @@ class Logger {
   private level: LogLevel = 'info';
   private logs: LogEntry[] = [];
   private readonly maxLogs: number = 1000;
-  
+
   private readonly levelPriority: Record<LogLevel, number> = {
     debug: 0,
     info: 1,
     warn: 2,
     error: 3,
   };
-  
+
   setLevel(level: LogLevel): void {
     this.level = level;
   }
-  
+
   private shouldLog(level: LogLevel): boolean {
     return this.levelPriority[level] >= this.levelPriority[this.level];
   }
-  
+
   private log(level: LogLevel, operation: string, message: string, metadata?: Record<string, any>): void {
     if (!this.shouldLog(level)) return;
-    
+
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -551,37 +552,37 @@ class Logger {
       message,
       metadata,
     };
-    
+
     this.logs.push(entry);
     if (this.logs.length > this.maxLogs) {
       this.logs.shift();
     }
-    
+
     // Output to stderr (MCP standard)
     const prefix = `[${level.toUpperCase()}][${operation}]`;
     console.error(`${prefix} ${message}`, metadata ? JSON.stringify(metadata) : '');
   }
-  
+
   debug(operation: string, message: string, metadata?: Record<string, any>): void {
     this.log('debug', operation, message, metadata);
   }
-  
+
   info(operation: string, message: string, metadata?: Record<string, any>): void {
     this.log('info', operation, message, metadata);
   }
-  
+
   warn(operation: string, message: string, metadata?: Record<string, any>): void {
     this.log('warn', operation, message, metadata);
   }
-  
+
   error(operation: string, message: string, metadata?: Record<string, any>): void {
     this.log('error', operation, message, metadata);
   }
-  
+
   getRecentLogs(count: number = 50): LogEntry[] {
     return this.logs.slice(-count);
   }
-  
+
   getLogs(options: { level?: LogLevel; operation?: string; since?: Date }): LogEntry[] {
     return this.logs.filter(log => {
       if (options.level && this.levelPriority[log.level] < this.levelPriority[options.level]) return false;
@@ -610,52 +611,52 @@ interface MetricEntry {
 class Metrics {
   private metrics: Map<string, MetricEntry> = new Map();
   private startTimes: Map<string, number> = new Map();
-  
+
   startTimer(operation: string, callId: string): void {
     this.startTimes.set(`${operation}:${callId}`, Date.now());
   }
-  
+
   endTimer(operation: string, callId: string, error: boolean = false): number {
     const key = `${operation}:${callId}`;
     const startTime = this.startTimes.get(key);
     this.startTimes.delete(key);
-    
+
     const duration = startTime ? Date.now() - startTime : 0;
-    
+
     let entry = this.metrics.get(operation);
     if (!entry) {
       entry = { operation, count: 0, totalDuration: 0, errors: 0, lastCall: 0, avgDuration: 0 };
       this.metrics.set(operation, entry);
     }
-    
+
     entry.count++;
     entry.totalDuration += duration;
     entry.avgDuration = entry.totalDuration / entry.count;
     entry.lastCall = Date.now();
     if (error) entry.errors++;
-    
+
     return duration;
   }
-  
+
   getMetrics(): Record<string, MetricEntry> {
     return Object.fromEntries(this.metrics);
   }
-  
+
   getOperationMetrics(operation: string): MetricEntry | undefined {
     return this.metrics.get(operation);
   }
-  
+
   getSummary(): { totalCalls: number; totalErrors: number; avgLatency: number; operations: number } {
     let totalCalls = 0;
     let totalErrors = 0;
     let totalDuration = 0;
-    
+
     for (const entry of this.metrics.values()) {
       totalCalls += entry.count;
       totalErrors += entry.errors;
       totalDuration += entry.totalDuration;
     }
-    
+
     return {
       totalCalls,
       totalErrors,
@@ -663,7 +664,7 @@ class Metrics {
       operations: this.metrics.size,
     };
   }
-  
+
   reset(): void {
     this.metrics.clear();
     this.startTimes.clear();
@@ -689,23 +690,23 @@ class OfflineQueue {
   private isOnline: boolean = true;
   private readonly maxQueueSize: number = 100;
   private readonly maxRetries: number = 3;
-  
+
   setOnlineStatus(online: boolean): void {
     this.isOnline = online;
     if (online) {
       logger.info('OfflineQueue', 'Back online, processing queued operations');
     }
   }
-  
+
   isQueueEnabled(): boolean {
     return !this.isOnline;
   }
-  
+
   enqueue(operation: string, args: Record<string, any>): string {
     if (this.queue.length >= this.maxQueueSize) {
       throw new Error('Offline queue is full. Please try again when online.');
     }
-    
+
     const id = `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     this.queue.push({
       id,
@@ -714,19 +715,19 @@ class OfflineQueue {
       timestamp: Date.now(),
       retries: 0,
     });
-    
+
     logger.info('OfflineQueue', `Queued operation: ${operation}`, { id });
     return id;
   }
-  
+
   getQueuedOperations(): QueuedOperation[] {
     return [...this.queue];
   }
-  
+
   getQueueSize(): number {
     return this.queue.length;
   }
-  
+
   removeFromQueue(id: string): boolean {
     const index = this.queue.findIndex(op => op.id === id);
     if (index !== -1) {
@@ -735,11 +736,11 @@ class OfflineQueue {
     }
     return false;
   }
-  
+
   clearQueue(): void {
     this.queue = [];
   }
-  
+
   // Get next operation to process (for sync processing)
   dequeue(): QueuedOperation | undefined {
     return this.queue.shift();
@@ -895,17 +896,17 @@ function validatePropertiesAgainstSchema(
   schema: Record<string, any>
 ): ValidationResult {
   const errors: string[] = [];
-  
+
   for (const [propName, propValue] of Object.entries(properties)) {
     const schemaProp = schema[propName];
-    
+
     if (!schemaProp) {
       errors.push(`Unknown property: ${propName}`);
       continue;
     }
-    
+
     const expectedType = schemaProp.type;
-    
+
     // Type validation
     switch (expectedType) {
       case 'title':
@@ -961,7 +962,7 @@ function validatePropertiesAgainstSchema(
         break;
     }
   }
-  
+
   return { valid: errors.length === 0, errors };
 }
 
@@ -982,17 +983,17 @@ interface HealthStatus {
 async function checkHealth(): Promise<HealthStatus> {
   const startTime = Date.now();
   let notionApiHealthy = false;
-  
+
   try {
     await withRetry(() => notion.users.me({}), 1, 'health_check');
     notionApiHealthy = true;
   } catch {
     notionApiHealthy = false;
   }
-  
+
   const latencyMs = Date.now() - startTime;
   const metricsSummary = metrics.getSummary();
-  
+
   return {
     status: notionApiHealthy ? 'healthy' : 'unhealthy',
     notionApi: notionApiHealthy,
@@ -1028,7 +1029,7 @@ async function batchCreatePages(
   pages: Array<{ title: string; properties?: Record<string, any>; content?: string }>
 ): Promise<BatchResult> {
   const results: BatchResult = { successful: 0, failed: 0, results: [] };
-  
+
   for (const page of pages) {
     try {
       const response = await withRetry(
@@ -1042,13 +1043,13 @@ async function batchCreatePages(
         3,
         'batch_create_page'
       );
-      
+
       // Add content if provided
       if (page.content) {
         const blocks = markdownToBlocks(page.content);
         await appendBlocksInBatches(response.id, blocks);
       }
-      
+
       results.successful++;
       results.results.push({ id: response.id, success: true });
     } catch (error: any) {
@@ -1056,13 +1057,13 @@ async function batchCreatePages(
       results.results.push({ id: page.title, success: false, error: error.message });
     }
   }
-  
+
   return results;
 }
 
 async function batchArchivePages(pageIds: string[]): Promise<BatchResult> {
   const results: BatchResult = { successful: 0, failed: 0, results: [] };
-  
+
   for (const pageId of pageIds) {
     try {
       await withRetry(
@@ -1077,13 +1078,13 @@ async function batchArchivePages(pageIds: string[]): Promise<BatchResult> {
       results.results.push({ id: pageId, success: false, error: error.message });
     }
   }
-  
+
   return results;
 }
 
 async function batchDeleteBlocks(blockIds: string[]): Promise<BatchResult> {
   const results: BatchResult = { successful: 0, failed: 0, results: [] };
-  
+
   for (const blockId of blockIds) {
     try {
       await withRetry(
@@ -1098,7 +1099,7 @@ async function batchDeleteBlocks(blockIds: string[]): Promise<BatchResult> {
       results.results.push({ id: blockId, success: false, error: error.message });
     }
   }
-  
+
   return results;
 }
 
@@ -1116,15 +1117,15 @@ async function duplicatePage(
     3,
     'duplicate_get_source'
   ) as any;
-  
+
   // Determine parent
-  const parent = options.targetParentId 
+  const parent = options.targetParentId
     ? { page_id: options.targetParentId }
     : sourcePage.parent;
-  
+
   // Clone properties
   const properties = { ...sourcePage.properties };
-  
+
   // Update title if provided
   if (options.newTitle) {
     const titleKey = Object.keys(properties).find(k => properties[k].type === 'title');
@@ -1139,7 +1140,7 @@ async function duplicatePage(
       properties[titleKey] = { title: [{ text: { content: `${originalTitle} (Copy)` } }] };
     }
   }
-  
+
   // Create new page
   const newPage = await withRetry(
     () => notion.pages.create({
@@ -1151,7 +1152,7 @@ async function duplicatePage(
     3,
     'duplicate_create_page'
   );
-  
+
   // Copy content if requested
   if (options.includeContent !== false) {
     const blocks = await paginateBlockChildren(sourcePageId);
@@ -1164,7 +1165,7 @@ async function duplicatePage(
       await appendBlocksInBatches(newPage.id, clonedBlocks);
     }
   }
-  
+
   return newPage;
 }
 
@@ -1180,7 +1181,7 @@ function loadDatabaseCache(): { conversationDbId?: string; projectDbId?: string 
     join(process.cwd(), '.notion-cache.json'),
     'Y:\\02_DATA\\09_Python\\00_Resilio_Common\\09_GeminiCLI_Notion\\.notion-cache.json',
   ];
-  
+
   for (const cacheFile of possiblePaths) {
     if (existsSync(cacheFile)) {
       try {
@@ -1191,7 +1192,7 @@ function loadDatabaseCache(): { conversationDbId?: string; projectDbId?: string 
       }
     }
   }
-  
+
   console.error('Cache file not found in any location');
   return {};
 }
@@ -1212,7 +1213,7 @@ function parsePageId(input: string): string {
  */
 function resolveDatabaseId(nameOrId: string): string {
   console.error(`🔍 Resolving database: '${nameOrId}'`);
-  
+
   if (nameOrId === 'conversations') {
     if (!conversationDbId) {
       throw new Error('Conversation database not configured. Please run setup or provide a valid database ID.');
@@ -1222,16 +1223,16 @@ function resolveDatabaseId(nameOrId: string): string {
   if (nameOrId === 'projects') {
     if (!projectDbId) {
       throw new Error('Project database not configured. Please run setup or provide a valid database ID.');
-    } 
+    }
     return projectDbId;
   }
-  
+
   // Check if it's already a UUID
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(nameOrId)) {
     console.error(`✓ Using database ID directly: ${nameOrId}`);
     return nameOrId;
   }
-  
+
   // Check if it's a Notion URL or ID format
   const cleaned = nameOrId.replace(/-/g, '');
   if (cleaned.length === 32) {
@@ -1239,7 +1240,7 @@ function resolveDatabaseId(nameOrId: string): string {
     console.error(`✓ Formatted database ID: ${formatted}`);
     return formatted;
   }
-  
+
   // If all else fails, return as-is and let Notion API handle it
   console.error(`⚠️ Using database identifier as-is: ${nameOrId}`);
   return nameOrId;
@@ -1251,13 +1252,13 @@ function resolveDatabaseId(nameOrId: string): string {
 function markdownToBlocks(markdown: string): any[] {
   const blocks: any[] = [];
   const lines = markdown.split('\n');
-  
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    
+
     // Skip empty lines
     if (!line.trim()) continue;
-    
+
     // Headings
     if (line.startsWith('### ')) {
       blocks.push({
@@ -1344,7 +1345,7 @@ function markdownToBlocks(markdown: string): any[] {
       });
     }
   }
-  
+
   return blocks;
 }
 
@@ -1361,7 +1362,7 @@ function richTextToPlain(richText: any[]): string {
 function formatDatabaseResults(results: any[]): any[] {
   return results.map(page => {
     const formatted: any = { id: page.id };
-    
+
     if (page.properties) {
       for (const [key, prop] of Object.entries(page.properties) as [string, any][]) {
         switch (prop.type) {
@@ -1430,7 +1431,7 @@ function formatDatabaseResults(results: any[]): any[] {
         }
       }
     }
-    
+
     return formatted;
   });
 }
@@ -1442,25 +1443,25 @@ async function initialize() {
   try {
     // Track server start time for uptime metrics
     (global as any).serverStartTime = Date.now();
-    
+
     const apiKey = await getNotionApiKey();
     if (!apiKey) {
       throw new Error('Notion API key not found. Run setup-windows.ps1 first.');
     }
-    
+
     notion = new Client({ auth: apiKey });
-    
+
     const cache = loadDatabaseCache();
     conversationDbId = cache.conversationDbId || '';
     projectDbId = cache.projectDbId || '';
-    
+
     if (!conversationDbId) {
       console.error('⚠ No conversation database configured');
     }
     if (!projectDbId) {
       console.error('⚠ No project database configured');
     }
-    
+
     // Verify connection
     await notion.users.me({});
     console.error('✓ Notion client initialized');
@@ -1486,11 +1487,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
   console.error(`🚀 Tool called: ${name}`);
-  
+
   const respond = (data: any) => ({
     content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
   });
-  
+
   const error = (msg: string) => ({
     content: [{ type: 'text' as const, text: JSON.stringify({ error: msg }, null, 2) }],
     isError: true,
@@ -1500,9 +1501,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       // ==================== SEARCH ====================
       case 'notion_search': {
-        const filter = args?.filter === 'all' ? undefined : 
+        const filter = args?.filter === 'all' ? undefined :
           args?.filter ? { property: 'object' as const, value: args.filter as 'page' | 'database' } : undefined;
-        
+
         const results = await withRetry(
           () => notion.search({
             query: args?.query as string,
@@ -1512,7 +1513,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           3,
           'notion_search'
         );
-        
+
         const formatted = results.results.map((r: any) => {
           let title = '';
           if (r.object === 'database') {
@@ -1520,11 +1521,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           } else {
             // Check common title property names for pages
             const props = r.properties || {};
-            const titleProp = props.title?.title || props.Name?.title || props.Title?.title || 
-                            props.name?.title || props['Page Title']?.title || [];
+            const titleProp = props.title?.title || props.Name?.title || props.Title?.title ||
+              props.name?.title || props['Page Title']?.title || [];
             title = richTextToPlain(titleProp) || 'Untitled';
           }
-          
+
           return {
             id: r.id,
             type: r.object,
@@ -1533,14 +1534,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             lastEdited: r.last_edited_time,
           };
         });
-        
+
         return respond({ count: formatted.length, results: formatted });
       }
 
       // ==================== PAGES ====================
       case 'create_page': {
         let parent: any;
-        
+
         if (args?.parentDatabaseId) {
           // Creating in a specific database
           const resolvedDbId = resolveDatabaseId(args.parentDatabaseId as string);
@@ -1558,20 +1559,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         } else {
           return error('No parent specified. Please provide either parentDatabaseId or parentPageId, or ensure conversation database is configured.');
         }
-        
+
         let properties: any;
         if (args?.parentDatabaseId) {
           // When creating in a database, we need to check the database schema for the title property
           properties = args?.properties as object || {};
-          
+
           // Only add title if not already provided in properties
-          if (args?.title && !properties.hasOwnProperty('title') && !properties.hasOwnProperty('Name') && 
-              !properties.hasOwnProperty('Title') && !properties.hasOwnProperty('name')) {
+          if (args?.title && !properties.hasOwnProperty('title') && !properties.hasOwnProperty('Name') &&
+            !properties.hasOwnProperty('Title') && !properties.hasOwnProperty('name')) {
             // Default to 'Name' property for database entries
             properties['Name'] = { title: [{ text: { content: args.title as string } }] };
           } else if (args?.title) {
             // Override existing title property if provided
-            const titleKey = Object.keys(properties).find(k => 
+            const titleKey = Object.keys(properties).find(k =>
               k.toLowerCase().includes('title') || k.toLowerCase().includes('name')
             ) || 'Name';
             properties[titleKey] = { title: [{ text: { content: args.title as string } }] };
@@ -1580,15 +1581,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           // For standalone pages, always use 'title'
           properties = { title: { title: [{ text: { content: args?.title as string } }] } };
         }
-        
+
         const children = args?.content ? markdownToBlocks(args.content as string) : undefined;
-        
+
         const page = await withRetry(
           () => notion.pages.create({
             parent,
             properties,
             children,
-            icon: args?.icon ? (args.icon as string).startsWith('http') 
+            icon: args?.icon ? (args.icon as string).startsWith('http')
               ? { type: 'external', external: { url: args.icon as string } }
               : { type: 'emoji', emoji: args.icon as any } : undefined,
             cover: args?.cover ? { type: 'external', external: { url: args.cover as string } } : undefined,
@@ -1596,7 +1597,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           3,
           'create_page'
         );
-        
+
         return respond({ id: page.id, url: (page as any).url, message: 'Page created successfully' });
       }
 
@@ -1607,20 +1608,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           3,
           'get_page'
         );
-        
+
         let content: any[] = [];
         if (args?.includeContent !== false) {
           // Use pagination for large pages
           content = await paginateBlockChildren(pageId, 500);
         }
-        
+
         return respond({ page, content });
       }
 
       case 'update_page': {
         const pageId = parsePageId(args?.pageId as string);
         const updates: any = {};
-        
+
         if (args?.properties) updates.properties = args.properties;
         if (args?.title) {
           updates.properties = {
@@ -1639,7 +1640,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args?.archived !== undefined) {
           updates.archived = args.archived;
         }
-        
+
         const page = await withRetry(
           () => notion.pages.update({ page_id: pageId, ...updates }),
           3,
@@ -1668,7 +1669,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           3,
           'list_databases'
         );
-        
+
         const databases = results.results.map((db: any) => ({
           id: db.id,
           title: richTextToPlain(db.title),
@@ -1676,14 +1677,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           isConversationDb: db.id === conversationDbId,
           isProjectDb: db.id === projectDbId,
         }));
-        
+
         return respond({ count: databases.length, databases });
       }
 
       case 'query_database': {
         const dbId = resolveDatabaseId(args?.databaseId as string);
         const limit = (args?.limit as number) || 100;
-        
+
         // Process sorts - support both property and timestamp sorts
         let processedSorts = args?.sorts as any;
         if (processedSorts) {
@@ -1696,7 +1697,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             return { property: sort.property, direction: sort.direction || 'ascending' };
           });
         }
-        
+
         // Use pagination for large queries (>100 items)
         let results: any[];
         if (limit > 100) {
@@ -1714,18 +1715,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           );
           results = response.results;
         }
-        
+
         const formatted = formatDatabaseResults(results);
         return respond({ count: formatted.length, results: formatted });
       }
 
       case 'create_database': {
         const parentId = parsePageId(args?.parentPageId as string);
-        
+
         const defaultProperties: any = {
           Name: { title: {} },
         };
-        
+
         const db = await withRetry(
           () => notion.databases.create({
             parent: { type: 'page_id', page_id: parentId },
@@ -1736,14 +1737,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           3,
           'create_database'
         );
-        
+
         return respond({ id: db.id, url: (db as any).url, message: 'Database created' });
       }
 
       case 'add_database_entry': {
         const dbId = resolveDatabaseId(args?.databaseId as string);
         const children = args?.content ? markdownToBlocks(args.content as string) : undefined;
-        
+
         const page = await withRetry(
           () => notion.pages.create({
             parent: { database_id: dbId },
@@ -1753,7 +1754,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           3,
           'add_database_entry'
         );
-        
+
         return respond({ id: page.id, url: (page as any).url, message: 'Entry added' });
       }
 
@@ -1764,32 +1765,32 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           3,
           'get_database_schema'
         );
-        
+
         const schema = Object.entries((db as any).properties).map(([name, prop]: [string, any]) => ({
           name,
           type: prop.type,
           options: prop.select?.options || prop.multi_select?.options || undefined,
         }));
-        
-        return respond({ 
-          id: db.id, 
+
+        return respond({
+          id: db.id,
           title: richTextToPlain((db as any).title),
-          properties: schema 
+          properties: schema
         });
       }
 
       case 'update_database_schema': {
         const dbId = resolveDatabaseId(args?.databaseId as string);
         const updates: any = {};
-        
+
         // Update title
         if (args?.title) {
           updates.title = [{ type: 'text', text: { content: args.title as string } }];
         }
-        
+
         // Build properties update
         const propertyUpdates: any = {};
-        
+
         // Add new properties
         if (args?.addProperties) {
           for (const [name, config] of Object.entries(args.addProperties as Record<string, any>)) {
@@ -1833,27 +1834,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           }
         }
-        
+
         // Update existing properties
         if (args?.updateProperties) {
           Object.assign(propertyUpdates, args.updateProperties);
         }
-        
+
         // Remove properties (set to null)
         if (args?.removeProperties) {
           for (const name of args.removeProperties as string[]) {
             propertyUpdates[name] = null;
           }
         }
-        
+
         if (Object.keys(propertyUpdates).length > 0) {
           updates.properties = propertyUpdates;
         }
-        
+
         const db = await notion.databases.update({ database_id: dbId, ...updates });
-        
-        return respond({ 
-          id: db.id, 
+
+        return respond({
+          id: db.id,
           message: 'Database schema updated',
           propertiesModified: Object.keys(propertyUpdates)
         });
@@ -1862,11 +1863,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // ==================== BLOCKS ====================
       case 'get_block_children': {
         const blockId = parsePageId(args?.blockId as string);
-        
+
         const fetchChildren = async (id: string, depth: number = 0): Promise<any[]> => {
           const response = await notion.blocks.children.list({ block_id: id, page_size: 100 });
           const blocks = response.results as any[];
-          
+
           if (args?.recursive && depth < 3) {
             for (const block of blocks) {
               if (block.has_children) {
@@ -1874,10 +1875,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               }
             }
           }
-          
+
           return blocks;
         };
-        
+
         const children = await fetchChildren(blockId);
         return respond({ count: children.length, blocks: children });
       }
@@ -1885,7 +1886,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'append_blocks': {
         const parentId = parsePageId(args?.parentId as string);
         let blocks = args?.blocks as any[] || [];
-        
+
         // Handle large content with auto-chunking
         if (args?.content) {
           const content = args.content as string;
@@ -1896,39 +1897,39 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             blocks = markdownToBlocks(content);
           }
         }
-        
+
         if (blocks.length === 0) {
           return error('No content or blocks provided');
         }
-        
+
         // Use batch appending for large block counts
         if (blocks.length > 100) {
           const totalAdded = await appendBlocksInBatches(parentId, blocks);
           return respond({ blocksAdded: totalAdded, message: `Content appended in ${Math.ceil(blocks.length / 100)} batches` });
         }
-        
+
         const result = await withRetry(() => notion.blocks.children.append({
           block_id: parentId,
           children: blocks,
         }), 3, 'append_blocks');
-        
+
         return respond({ blocksAdded: result.results.length, message: 'Content appended' });
       }
 
       case 'update_block': {
         const blockId = args?.blockId as string;
         const updates: any = {};
-        
+
         if (args?.archived !== undefined) {
           updates.archived = args.archived;
         }
-        
+
         if (args?.content && args?.type) {
           updates[args.type as string] = {
             rich_text: [{ type: 'text', text: { content: args.content as string } }],
           };
         }
-        
+
         const block = await notion.blocks.update({ block_id: blockId, ...updates });
         return respond({ id: block.id, message: 'Block updated' });
       }
@@ -1942,14 +1943,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'get_comments': {
         const pageId = parsePageId(args?.pageId as string);
         const comments = await notion.comments.list({ block_id: pageId });
-        
+
         const formatted = comments.results.map((c: any) => ({
           id: c.id,
           text: richTextToPlain(c.rich_text),
           createdTime: c.created_time,
           discussionId: c.discussion_id,
         }));
-        
+
         return respond({ count: formatted.length, comments: formatted });
       }
 
@@ -1957,13 +1958,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const params: any = {
           rich_text: [{ type: 'text', text: { content: args?.content as string } }],
         };
-        
+
         if (args?.discussionId) {
           params.discussion_id = args.discussionId as string;
         } else {
           params.parent = { page_id: parsePageId(args?.pageId as string) };
         }
-        
+
         const comment = await notion.comments.create(params);
         return respond({ id: comment.id, message: 'Comment added' });
       }
@@ -1971,7 +1972,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // ==================== USERS ====================
       case 'list_users': {
         const users = await notion.users.list({ page_size: (args?.limit as number) || 100 });
-        
+
         const formatted = users.results.map((u: any) => ({
           id: u.id,
           name: u.name,
@@ -1979,7 +1980,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           email: u.person?.email,
           avatarUrl: u.avatar_url,
         }));
-        
+
         return respond({ count: formatted.length, users: formatted });
       }
 
@@ -1996,34 +1997,34 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // ==================== PROJECTS ====================
       case 'list_projects': {
         if (!projectDbId) return error('No project database configured');
-        
-        const filter = args?.status 
+
+        const filter = args?.status
           ? { property: 'Status', select: { equals: args.status as string } }
           : undefined;
-        
-        const sorts = args?.sortBy === 'date' 
+
+        const sorts = args?.sortBy === 'date'
           ? [{ property: 'Start Date', direction: 'descending' as const }]
           : args?.sortBy === 'status'
-          ? [{ property: 'Status', direction: 'ascending' as const }]
-          : [{ property: 'Project Name', direction: 'ascending' as const }];
-        
+            ? [{ property: 'Status', direction: 'ascending' as const }]
+            : [{ property: 'Project Name', direction: 'ascending' as const }];
+
         const results = await notion.databases.query({
           database_id: projectDbId,
           filter,
           sorts,
           page_size: (args?.limit as number) || 50,
         });
-        
+
         return respond({ count: results.results.length, projects: formatDatabaseResults(results.results) });
       }
 
       case 'create_project': {
         if (!projectDbId) return error('No project database configured');
-        
+
         const properties: any = {
           'Project Name': { title: [{ text: { content: args?.name as string } }] },
         };
-        
+
         if (args?.status) {
           properties['Status'] = { select: { name: args.status as string } };
         }
@@ -2031,27 +2032,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           properties['Description'] = { rich_text: [{ text: { content: args.description as string } }] };
         }
         if (args?.technologies) {
-          properties['Key Technologies'] = { 
-            multi_select: (args.technologies as string[]).map(t => ({ name: t })) 
+          properties['Key Technologies'] = {
+            multi_select: (args.technologies as string[]).map(t => ({ name: t }))
           };
         }
         if (args?.githubRepo) {
           properties['GitHub Repository'] = { url: args.githubRepo as string };
         }
-        
+
         const page = await notion.pages.create({
           parent: { database_id: projectDbId },
           properties,
         });
-        
+
         return respond({ id: page.id, url: (page as any).url, message: 'Project created' });
       }
 
       case 'update_project': {
         if (!projectDbId) return error('No project database configured');
-        
+
         let pageId = args?.projectId as string;
-        
+
         // If it's a name, find the project
         if (!pageId.match(/^[a-f0-9-]{32,36}$/i)) {
           const search = await notion.databases.query({
@@ -2062,14 +2063,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           if (search.results.length === 0) return error(`Project not found: ${pageId}`);
           pageId = search.results[0].id;
         }
-        
+
         const properties: any = {};
         if (args?.name) properties['Project Name'] = { title: [{ text: { content: args.name as string } }] };
         if (args?.status) properties['Status'] = { select: { name: args.status as string } };
         if (args?.description) properties['Description'] = { rich_text: [{ text: { content: args.description as string } }] };
         if (args?.technologies) properties['Key Technologies'] = { multi_select: (args.technologies as string[]).map(t => ({ name: t })) };
         if (args?.githubRepo) properties['GitHub Repository'] = { url: args.githubRepo as string };
-        
+
         await notion.pages.update({ page_id: pageId, properties });
         return respond({ message: 'Project updated' });
       }
@@ -2077,15 +2078,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // ==================== CONVERSATIONS ====================
       case 'export_conversation': {
         if (!conversationDbId) return error('No conversation database configured');
-        
+
         const data = args?.conversationData as any;
         const messages = data?.messages || [];
-        
+
         // Generate title from first user message
-        const title = args?.title as string || 
+        const title = args?.title as string ||
           messages.find((m: any) => m.role === 'user')?.content?.slice(0, 50) + '...' ||
           'Gemini Conversation';
-        
+
         // Convert conversation to blocks
         const blocks: any[] = [];
         for (const msg of messages) {
@@ -2098,36 +2099,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           });
         }
-        
+
         const properties: any = {
           'Title': { title: [{ text: { content: title } }] },
           'Export Date': { date: { start: new Date().toISOString() } },
           'Message Count': { number: messages.length },
         };
-        
+
         if (args?.tags) {
           properties['Tags'] = { multi_select: (args.tags as string[]).map(t => ({ name: t })) };
         }
-        
+
         const page = await notion.pages.create({
           parent: { database_id: conversationDbId },
           properties,
           children: blocks.slice(0, 100), // Notion limit
         });
-        
-        return respond({ 
-          id: page.id, 
+
+        return respond({
+          id: page.id,
           url: (page as any).url,
           title,
           messageCount: messages.length,
-          message: 'Conversation exported successfully' 
+          message: 'Conversation exported successfully'
         });
       }
 
       case 'link_conversation_to_project': {
         const conversationId = parsePageId(args?.conversationId as string);
         let projectId = args?.projectId as string;
-        
+
         // Find project by name if needed
         if (!projectId.match(/^[a-f0-9-]{32,36}$/i)) {
           const search = await notion.databases.query({
@@ -2138,14 +2139,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           if (search.results.length === 0) return error(`Project not found: ${projectId}`);
           projectId = search.results[0].id;
         }
-        
+
         await notion.pages.update({
           page_id: conversationId,
           properties: {
             'Associated Project': { relation: [{ id: projectId }] },
           },
         });
-        
+
         return respond({ message: 'Conversation linked to project' });
       }
 
@@ -2153,39 +2154,39 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'duplicate_page': {
         const sourceId = parsePageId(args?.pageId as string);
         const newTitle = args?.newTitle as string | undefined;
-        const targetParentId = args?.targetParentId 
+        const targetParentId = args?.targetParentId
           ? parsePageId(args.targetParentId as string)
           : undefined;
-        
+
         const newPage = await duplicatePage(sourceId, {
           newTitle,
           targetParentId,
           includeContent: true,
         });
-        
+
         return respond({ id: newPage.id, url: newPage.url, message: 'Page duplicated with content' });
       }
 
       case 'get_recent_changes': {
         const filter = args?.filter === 'all' ? undefined :
           args?.filter ? { property: 'object' as const, value: args.filter as 'page' | 'database' } : undefined;
-        
+
         const results = await notion.search({
           filter,
           sort: { direction: 'descending', timestamp: 'last_edited_time' },
           page_size: (args?.limit as number) || 20,
         });
-        
+
         const formatted = results.results.map((r: any) => ({
           id: r.id,
           type: r.object,
-          title: r.object === 'database' 
+          title: r.object === 'database'
             ? richTextToPlain(r.title)
             : richTextToPlain(r.properties?.title?.title || r.properties?.Name?.title || []),
           lastEdited: r.last_edited_time,
           url: r.url,
         }));
-        
+
         return respond({ count: formatted.length, results: formatted });
       }
 
@@ -2211,17 +2212,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const count = (args?.count as number) || 50;
         const level = args?.level as LogLevel | undefined;
         const operation = args?.operation as string | undefined;
-        
+
         const logs = level || operation
           ? logger.getLogs({ level, operation })
           : logger.getRecentLogs(count);
-        
+
         return respond({ count: logs.length, logs });
       }
 
       case 'clear_cache': {
         const cacheType = (args?.type as string) || 'all';
-        
+
         switch (cacheType) {
           case 'schemas':
             schemaCache.clear();
@@ -2242,7 +2243,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             pageCache.clear();
             userCache.clear();
         }
-        
+
         return respond({ message: `Cache cleared: ${cacheType}` });
       }
 
@@ -2264,24 +2265,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const title = args?.title as string;
         const parentPageId = args?.parentPageId as string | undefined;
         const parentDatabaseId = args?.parentDatabaseId as string | undefined;
-        
+
         const template = getTemplate(templateId);
         if (!template) {
           return error(`Unknown template: ${templateId}. Use list_templates to see available options.`);
         }
-        
+
         if (!parentPageId && !parentDatabaseId) {
           return error('Either parentPageId or parentDatabaseId is required');
         }
-        
-        const parent = parentDatabaseId 
+
+        const parent = parentDatabaseId
           ? { database_id: resolveDatabaseId(parentDatabaseId) }
           : { page_id: parsePageId(parentPageId!) };
-        
+
         const properties: any = parentDatabaseId
           ? { Name: { title: [{ text: { content: title } }] } }
           : { title: { title: [{ text: { content: title } }] } };
-        
+
         const page = await withRetry(
           () => notion.pages.create({
             parent,
@@ -2291,12 +2292,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           3,
           'create_from_template'
         );
-        
+
         // Add template blocks
         if (template.blocks.length > 0) {
           await appendBlocksInBatches(page.id, template.blocks);
         }
-        
+
         return respond({
           id: page.id,
           url: (page as any).url,
@@ -2308,11 +2309,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'batch_create_pages': {
         const parentId = parsePageId(args?.parentId as string);
         const pages = args?.pages as Array<{ title: string; content?: string; properties?: Record<string, any> }>;
-        
+
         if (!pages || pages.length === 0) {
           return error('No pages provided');
         }
-        
+
         const result = await batchCreatePages(parentId, pages);
         return respond({
           ...result,
@@ -2322,11 +2323,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'batch_archive_pages': {
         const pageIds = args?.pageIds as string[];
-        
+
         if (!pageIds || pageIds.length === 0) {
           return error('No page IDs provided');
         }
-        
+
         const result = await batchArchivePages(pageIds.map(parsePageId));
         return respond({
           ...result,
@@ -2336,11 +2337,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'batch_delete_blocks': {
         const blockIds = args?.blockIds as string[];
-        
+
         if (!blockIds || blockIds.length === 0) {
           return error('No block IDs provided');
         }
-        
+
         const result = await batchDeleteBlocks(blockIds);
         return respond({
           ...result,
@@ -2351,11 +2352,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'validate_properties': {
         const databaseId = parsePageId(args?.databaseId as string);
         const properties = args?.properties as Record<string, any>;
-        
+
         // Get database schema (with caching)
         const cacheKey = `schema:${databaseId}`;
         let schema = schemaCache.get(cacheKey);
-        
+
         if (!schema) {
           const db = await withRetry(
             () => notion.databases.retrieve({ database_id: databaseId }),
@@ -2365,7 +2366,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           schema = (db as any).properties;
           schemaCache.set(cacheKey, schema, 600);
         }
-        
+
         const validation = validatePropertiesAgainstSchema(properties, schema);
         return respond(validation);
       }
@@ -2386,7 +2387,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'check_api_health': {
         const includeDetails = args?.includeDetails as boolean ?? true;
         const startTime = Date.now();
-        
+
         let apiHealthy = false;
         try {
           await withRetry(() => notion.users.me({}), 1, 'health_check');
@@ -2394,26 +2395,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         } catch {
           apiHealthy = false;
         }
-        
+
         const latency = Date.now() - startTime;
-        
+
         const health = {
           status: apiHealthy ? 'healthy' : 'unhealthy',
           apiConnectivity: apiHealthy,
           latency: `${latency}ms`,
           timestamp: new Date().toISOString()
         };
-        
+
         if (includeDetails) {
           Object.assign(health, {
             requestsTotal: 'available_in_metrics',
-            requestsToday: 'available_in_metrics', 
+            requestsToday: 'available_in_metrics',
             errorRate: 'available_in_metrics',
             cacheHits: 'available_in_metrics',
             uptimeSeconds: Math.floor((Date.now() - ((global as any).serverStartTime || Date.now())) / 1000)
           });
         }
-        
+
         return respond(health);
       }
 
@@ -2438,7 +2439,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const parentPageId = parsePageId(args?.parentPageId as string);
         const templateName = args?.templateName as string;
         const databaseTitle = args?.databaseTitle as string;
-        
+
         // Template definitions
         const templates: any = {
           document_scanner: {
@@ -2446,8 +2447,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             'File Path': { rich_text: {} },
             'Upload Date': { date: {} },
             'File Size': { rich_text: {} },
-            'Document Type': { 
-              select: { 
+            'Document Type': {
+              select: {
                 options: [
                   { name: 'Invoice', color: 'blue' as const },
                   { name: 'Receipt', color: 'green' as const },
@@ -2456,7 +2457,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 ]
               }
             },
-            'Status': { 
+            'Status': {
               select: {
                 options: [
                   { name: 'New', color: 'blue' as const },
@@ -2467,10 +2468,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
             'Notes': { rich_text: {} }
           },
-          
+
           project_tracker: {
             'Name': { title: {} },
-            'Status': { 
+            'Status': {
               select: {
                 options: [
                   { name: 'Planning', color: 'blue' as const },
@@ -2498,7 +2499,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             'Title': { title: {} },
             'Date': { date: {} },
             'Participants': { multi_select: {} },
-            'Meeting Type': { 
+            'Meeting Type': {
               select: {
                 options: [
                   { name: 'Team Meeting', color: 'blue' as const },
@@ -2514,7 +2515,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
           task_management: {
             'Task': { title: {} },
-            'Status': { 
+            'Status': {
               select: {
                 options: [
                   { name: 'To Do', color: 'red' as const },
@@ -2539,7 +2540,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             'Tags': { multi_select: {} }
           }
         };
-        
+
         const template = templates[templateName];
         if (!template) {
           return error(`Unknown template: ${templateName}`);
@@ -2567,17 +2568,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const folderPath = args?.folderPath as string;
         const databaseId = resolveDatabaseId(args?.databaseId as string);
         const fileExtensions = args?.fileExtensions as string[] || ['.pdf'];
-        
+
         function scanFolderForFiles(folderPath: string, extensions: string[]): string[] {
           const files: string[] = [];
-          
+
           try {
             const items = readdirSync(folderPath);
-            
+
             for (const item of items) {
               const itemPath = join(folderPath, item);
               const stat = statSync(itemPath);
-              
+
               if (stat.isFile()) {
                 const ext = extname(item).toLowerCase();
                 if (extensions.includes(ext)) {
@@ -2588,18 +2589,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           } catch (error) {
             console.error(`Error scanning folder ${folderPath}:`, error);
           }
-          
+
           return files;
         }
-        
+
         const files = scanFolderForFiles(folderPath, fileExtensions);
         let successCount = 0;
         let errorCount = 0;
-        
+
         for (const filePath of files) {
           try {
             const filename = basename(filePath, extname(filePath));
-            
+
             await notion.pages.create({
               parent: { database_id: databaseId },
               properties: {
@@ -2611,7 +2612,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 }
               }
             });
-            
+
             successCount++;
             await new Promise(resolve => setTimeout(resolve, 400)); // Rate limiting
           } catch (error) {
@@ -2633,23 +2634,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const filename = args?.filename as string;
         const mode = (args?.mode as string) || 'metadata';
         const attachTo = args?.attachTo as { type: string; id: string } | undefined;
-        
+
         if (!existsSync(filePath)) {
           return error(`File not found: ${filePath}`);
         }
-        
+
         try {
           const fileInfo = statSync(filePath);
           const finalFilename = filename || basename(filePath);
           const fileExt = extname(filePath).toLowerCase();
-          
+
           // Handle different privacy-respecting modes
           switch (mode) {
             case 'extract': {
               // Extract text content from various file types
               let extractedContent = '';
               let contentType = 'unknown';
-              
+
               try {
                 if (['.txt', '.md', '.csv', '.log', '.json', '.xml', '.yaml', '.yml'].includes(fileExt)) {
                   extractedContent = readFileSync(filePath, 'utf-8');
@@ -2666,17 +2667,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 extractedContent = `[PROTECTED FILE ACCESS]\n\nFile: ${finalFilename}\nSize: ${fileInfo.size} bytes\n\n🔒 File content could not be safely extracted (may contain binary or encrypted data).\n\nThis protects your privacy by not exposing potentially sensitive content.`;
                 contentType = 'protected';
               }
-              
+
               if (attachTo) {
                 // Create a page with the extracted content
-                const parent: any = attachTo.type === 'database' 
+                const parent: any = attachTo.type === 'database'
                   ? { database_id: attachTo.id }
                   : { page_id: attachTo.id };
-                  
+
                 const properties: any = attachTo.type === 'database'
                   ? { Name: { title: [{ text: { content: `📄 ${finalFilename}` } }] } }
                   : { title: { title: [{ text: { content: `📄 ${finalFilename}` } }] } };
-                
+
                 const blocks: any[] = [
                   {
                     type: 'heading_2',
@@ -2693,7 +2694,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     }
                   }
                 ];
-                
+
                 // Add content based on what we extracted
                 if (contentType === 'text' || contentType === 'html-text') {
                   const truncatedContent = extractedContent.slice(0, 1500); // Keep within Notion limits
@@ -2704,7 +2705,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                       rich_text: [{ type: 'text', text: { content: truncatedContent } }]
                     }
                   });
-                  
+
                   if (extractedContent.length > 1500) {
                     blocks.push({
                       type: 'callout',
@@ -2724,7 +2725,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     }
                   });
                 }
-                
+
                 const page = await withRetry(
                   () => notion.pages.create({
                     parent,
@@ -2734,7 +2735,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   3,
                   'create_file_reference'
                 );
-                
+
                 return respond({
                   success: true,
                   pageId: page.id,
@@ -2757,7 +2758,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 });
               }
             }
-            
+
             case 'secure': {
               // Create secure file reference without exposing content
               const secureInfo = {
@@ -2768,16 +2769,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 location: 'Local file system (secure)',
                 privacy: 'Full confidentiality maintained'
               };
-              
+
               if (attachTo) {
-                const parent: any = attachTo.type === 'database' 
+                const parent: any = attachTo.type === 'database'
                   ? { database_id: attachTo.id }
                   : { page_id: attachTo.id };
-                  
+
                 const properties: any = attachTo.type === 'database'
                   ? { Name: { title: [{ text: { content: `🔒 ${finalFilename}` } }] } }
                   : { title: { title: [{ text: { content: `🔒 ${finalFilename}` } }] } };
-                
+
                 const blocks: any[] = [
                   {
                     type: 'heading_2',
@@ -2799,7 +2800,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     }
                   }
                 ];
-                
+
                 const page = await withRetry(
                   () => notion.pages.create({
                     parent,
@@ -2809,7 +2810,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   3,
                   'create_secure_reference'
                 );
-                
+
                 return respond({
                   success: true,
                   pageId: page.id,
@@ -2822,7 +2823,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 return respond(secureInfo);
               }
             }
-            
+
             default: // 'metadata' mode
               return respond({
                 filename: finalFilename,
@@ -2846,14 +2847,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'start_file_watcher': {
-        return respond({ 
+        return respond({
           message: 'File watching feature available in standalone version',
           note: 'This feature requires additional setup for continuous monitoring'
         });
       }
 
       case 'stop_file_watcher': {
-        return respond({ 
+        return respond({
           message: 'No active watchers to stop',
           note: 'File watching feature available in standalone version'
         });

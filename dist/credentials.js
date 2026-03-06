@@ -52,7 +52,10 @@ function getWindowsCredential(target) {
  */
 function getMacCredential(name) {
     try {
-        const password = execSync(`security find-generic-password -s "${SERVICE_NAME}" -a "${name}" -w`, { encoding: 'utf-8' }).trim();
+        if (process.env.NOTION_API_KEY) {
+            return process.env.NOTION_API_KEY;
+        }
+        const password = execSync(`security find-generic-password -s "${SERVICE_NAME}" -a "${name}" -w`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
         return password || null;
     }
     catch (error) {
@@ -63,8 +66,13 @@ function getMacCredential(name) {
  * Linux secret-tool (libsecret)
  */
 function getLinuxCredential(name) {
+    console.log(`Retrieving Linux credential for ${name}`);
     try {
-        const password = execSync(`secret-tool lookup service "${SERVICE_NAME}" account "${name}"`, { encoding: 'utf-8' }).trim();
+        if (process.env.NOTION_API_KEY) {
+            console.log(`Using environment variable NOTION_API_KEY`);
+            return process.env.NOTION_API_KEY;
+        }
+        const password = execSync(`secret-tool lookup service "${SERVICE_NAME}" account "${name}"`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
         return password || null;
     }
     catch (error) {
@@ -76,7 +84,7 @@ function getLinuxCredential(name) {
  */
 export function getNotionApiKey() {
     // Try secure credential storage first
-    const apiKey = getCredential('API_KEY');
+    const apiKey = getCredential('NOTION_API_KEY');
     if (apiKey) {
         return apiKey;
     }
