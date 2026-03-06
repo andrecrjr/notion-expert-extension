@@ -13,9 +13,6 @@
         "${extensionPath}/dist/bundle.js"
       ],
       "cwd": "${extensionPath}",
-      "env": {
-        "NOTION_API_KEY": "${NOTION_API_KEY}"
-      },
       "timeout": 30
     }
   },
