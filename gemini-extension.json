@@ -19,8 +19,7 @@
     {
       "name": "Notion API Key",
       "description": "Your internal integration secret from https://www.notion.so/my-integrations",
-      "envVar": "NOTION_API_KEY",
-      "sensitive": true
+      "envVar": "NOTION_API_KEY"
     }
   ],
   "contextPath": "GEMINI.md",
