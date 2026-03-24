@@ -49,6 +49,28 @@ When a user asks to "Create a weekly report page with a summary and bullet point
 2. Immediately follow up with `append_blocks` utilizing well-structured markdown for the summary and bullets.
 3. The underlying MCP will convert your markdown into Notion's block structure smoothly.
 
+### 5. Database Query Filters for Pages
+When searching for pages using `query_database` on page databases, you can use advanced filters:
+
+```json
+// Filter by page title
+{ "property": "Name", "title": { "contains": "Meeting" } }
+
+// Filter by last edited time
+{ "last_edited_time": { "past_week": {} } }
+
+// Filter by created time
+{ "created_time": { "past_month": {} } }
+
+// Compound filter: Recent meeting notes
+{
+  "and": [
+    { "property": "Name", "title": { "contains": "Meeting" } },
+    { "last_edited_time": { "past_week": {} } }
+  ]
+}
+```
+
 ## 🎯 Mega-Skill Workflows
 
 ### W1: The Perfect Document Export
@@ -67,3 +89,18 @@ When a user asks to "Create a weekly report page with a summary and bullet point
 **Trigger:** "Duplicate my template page"
 1. `notion_search` to find it.
 2. `duplicate_page` - this invokes the enhanced V3 duplication script that deep-copies all blocks reliably.
+
+---
+
+## 📚 Quick Filter Reference for Pages
+
+| Filter Type | Example |
+|-------------|---------|
+| Title contains | `{ "property": "Name", "title": { "contains": "Meeting" } }` |
+| Last edited this week | `{ "last_edited_time": { "past_week": {} } }` |
+| Created this month | `{ "created_time": { "past_month": {} } }` |
+| Edited after date | `{ "last_edited_time": { "after": "2024-01-01" } }` |
+| Compound (AND) | `{ "and": [{ "property": "Name", "title": { "contains": "Notes" } }, { "last_edited_time": { "past_week": {} } }] }` |
+| Compound (OR) | `{ "or": [{ "last_edited_time": { "past_week": {} } }, { "created_time": { "past_week": {} } }] }` |
+
+For comprehensive filter documentation, see the **Notion Database Specialist** skill.
