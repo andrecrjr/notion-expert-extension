@@ -5,6 +5,13 @@ import { platform } from 'os';
 const SERVICE_NAME = 'gemini-notion-extension';
 
 /**
+ * Check if running in MCP stdio mode
+ */
+export function isMcpStdioMode(): boolean {
+  return process.env.MCP_STDIO === 'true' || process.env.MCP_MODE === 'stdio';
+}
+
+/**
  * Retrieve credential from secure storage
  */
 export function getCredential(name: string): string | null {
@@ -76,10 +83,9 @@ function getMacCredential(name: string): string | null {
  * Linux secret-tool (libsecret)
  */
 function getLinuxCredential(name: string): string | null {
-  console.log(`Retrieving Linux credential for ${name}`);
   try {
+    // Environment variable takes precedence (best for MCP stdio mode)
     if (process.env.NOTION_API_KEY) {
-      console.log(`Using environment variable NOTION_API_KEY`);
       return process.env.NOTION_API_KEY;
     }
     const password = execSync(
@@ -107,6 +113,15 @@ export function getNotionApiKey(): string {
   // Fallback to environment variable
   if (process.env.NOTION_API_KEY && process.env.NOTION_API_KEY !== 'secret_your_integration_token_here') {
     return process.env.NOTION_API_KEY;
+  }
+
+  // MCP stdio mode - provide clear error for MCP clients
+  if (isMcpStdioMode()) {
+    throw new Error(
+      'MCP_STDIO_ERROR: Notion API key not found. ' +
+      'Please set NOTION_API_KEY environment variable when starting the MCP server. ' +
+      'Example: NOTION_API_KEY="ntn_xxx" npx tsx src/server.ts'
+    );
   }
 
   throw new Error(

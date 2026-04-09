@@ -1,11 +1,11 @@
-# 📝 Notion Expert v3.0.4 Enhanced Edition
+# 📝 Notion Expert v3.0.5 Enhanced Edition
 
 > Complete Notion workspace automation via Model Context Protocol (MCP). Works with [Gemini CLI](https://github.com/google-gemini/gemini-cli) and [Qwen Code](https://github.com/QwenLM/qwen-code).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![MCP](https://img.shields.io/badge/MCP-Server-purple.svg)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/Version-3.0.4-brightgreen.svg)](https://github.com/andrecrjr/gemini-notion-expert-extension/releases)
+[![Version](https://img.shields.io/badge/Version-3.0.5-brightgreen.svg)](https://github.com/andrecrjr/gemini-notion-expert-extension/releases)
 
 Transform your Notion workspace into a powerful automation hub with **46 comprehensive tools**, file processing, database templates, and intelligent monitoring.
 
@@ -39,6 +39,19 @@ export NOTION_API_KEY="ntn_your_token_here"
 
 # 3. Verify installation
 qwen mcp list
+```
+
+**For direct MCP stdio mode (advanced):**
+```bash
+# Set MCP stdio mode for clean JSON-RPC communication
+export MCP_STDIO=true
+export NOTION_API_KEY="ntn_your_token_here"
+
+# Start server directly
+node dist/bundle.js
+
+# Or with tsx (development)
+MCP_STDIO=true NOTION_API_KEY="ntn_xxx" npx tsx src/server.ts
 ```
 
 That's it! You're ready to use Notion with your AI assistant. 🎉

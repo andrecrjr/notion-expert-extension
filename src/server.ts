@@ -9,7 +9,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { Client, APIResponseError } from '@notionhq/client';
 import { tools } from './tools.js';
-import { getNotionApiKey } from './credentials.js';
+import { getNotionApiKey, isMcpStdioMode } from './credentials.js';
 import { readFileSync, existsSync, statSync, readdirSync } from 'fs';
 import { join, dirname, extname, basename } from 'path';
 import { fileURLToPath } from 'url';
@@ -126,8 +126,10 @@ const enhancedTools = [
 // Combined tools array (original + enhanced)
 const allTools = [...tools, ...enhancedTools];
 
-// Debug: Log number of tools being registered
-console.error(`📊 Registering ${allTools.length} tools: ${allTools.map(t => t.name).slice(0, 5).join(', ')}${allTools.length > 5 ? '...' : ''}`);
+// Debug: Log number of tools being registered (only in non-stdio mode)
+if (!isMcpStdioMode()) {
+  console.error(`📊 Registering ${allTools.length} tools: ${allTools.map(t => t.name).slice(0, 5).join(', ')}${allTools.length > 5 ? '...' : ''}`);
+}
 
 // Get the directory where this script is located
 const __filename = fileURLToPath(import.meta.url);
@@ -563,9 +565,11 @@ class Logger {
       this.logs.shift();
     }
 
-    // Output to stderr (MCP standard)
-    const prefix = `[${level.toUpperCase()}][${operation}]`;
-    console.error(`${prefix} ${message}`, metadata ? JSON.stringify(metadata) : '');
+    // Output to stderr (MCP standard) - only in non-stdio mode
+    if (!logger.isStdio()) {
+      const prefix = `[${level.toUpperCase()}][${operation}]`;
+      console.error(`${prefix} ${message}`, metadata ? JSON.stringify(metadata) : '');
+    }
   }
 
   debug(operation: string, message: string, metadata?: Record<string, any>): void {
@@ -582,6 +586,10 @@ class Logger {
 
   error(operation: string, message: string, metadata?: Record<string, any>): void {
     this.log('error', operation, message, metadata);
+  }
+
+  isStdio(): boolean {
+    return isMcpStdioMode();
   }
 
   getRecentLogs(count: number = 50): LogEntry[] {
@@ -1190,7 +1198,7 @@ function loadDatabaseCache(): { conversationDbId?: string; projectDbId?: string 
   for (const cacheFile of possiblePaths) {
     if (existsSync(cacheFile)) {
       try {
-        console.error(`Loading cache from: ${cacheFile}`);
+        logger.debug('Cache', `Loading cache from: ${cacheFile}`);
         return JSON.parse(readFileSync(cacheFile, 'utf-8'));
       } catch {
         continue;
@@ -1198,7 +1206,7 @@ function loadDatabaseCache(): { conversationDbId?: string; projectDbId?: string 
     }
   }
 
-  console.error('Cache file not found in any location');
+  logger.debug('Cache', 'Cache file not found in any location');
   return {};
 }
 
@@ -1462,17 +1470,17 @@ async function initialize() {
     projectDbId = cache.projectDbId || '';
 
     if (!conversationDbId) {
-      console.error('⚠ No conversation database configured');
+      logger.warn('Initialize', 'No conversation database configured');
     }
     if (!projectDbId) {
-      console.error('⚠ No project database configured');
+      logger.warn('Initialize', 'No project database configured');
     }
 
     // Verify connection
     await notion.users.me({});
-    console.error('✓ Notion client initialized');
+    logger.info('Initialize', 'Notion client initialized');
   } catch (error: any) {
-    console.error('Failed to initialize:', error.message);
+    logger.error('Initialize', `Failed to initialize: ${error.message}`);
     process.exit(1);
   }
 }
@@ -2894,7 +2902,18 @@ async function main() {
   await initialize();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('🚀 Notion MCP Server v3.0.1 running - Enhanced Edition with 46 tools (38 original + 8 enhanced)');
+  
+  // MCP stdio mode detection for better client integration
+  const isMcpStdio = process.env.MCP_STDIO === 'true' || process.env.MCP_MODE === 'stdio';
+  
+  if (isMcpStdio) {
+    // Clean stderr output for MCP clients (no emojis that might interfere with parsing)
+    console.error('[MCP] Notion MCP Server v3.0.4 connected via stdio');
+    console.error('[MCP] Tools available: 46 (38 core + 8 enhanced)');
+    console.error('[MCP] Ready for JSON-RPC requests');
+  } else {
+    console.error('🚀 Notion MCP Server v3.0.4 running - Enhanced Edition with 46 tools (38 original + 8 enhanced)');
+  }
 }
 
 main().catch(err => {
